@@ -3,47 +3,61 @@
 use strict;
 use warnings;
 use JFR::Fasta;
+use IO::Uncompress::Gunzip qw($GunzipError);
 use List::Util;
 use Data::Dumper;
 
 our $SEED  = 42;
-our $BLAST = 'ML2.2_v_meta_minusML.blastp';
-our $FASTA = '/bwdata1/jfryan/00-DATA/ML2.2.aa';
 our $REPS  = 10000;
+our $BLAST = 'ML2.2_v_meta_minusML.blastp.gz';
+
+our $FASTA = 'ML2.2.aa'; 
+# ML2.2.aa can be downloade from:
+#   https://research.nhgri.nih.gov/mnemiopsis/download/proteome/ML2.2.aa.gz
+
+#our @INFILES = qw(../01-LOST/ml_haeck_others.0.70.fa ../01-LOST/ml_others.0.70.fa ../02-CMEFBL/MLHO_87.fa ../02-CMEFBL/MLO_120.fa);
+#our @OUTFILES = qw( MLHO_165_orphs.txt MLO_189_orphs.txt MLHO_120_orphs.txt MLO_87_orphs.txt );
+
+our @INFILES = qw(../01-LOST/ml_haeck_others.0.70.fa ../01-LOST/ml_others.0.70.fa);
+our @OUTFILES = qw( MLHO_165_orphs.txt MLO_189_orphs.txt);
 
 MAIN: {
     srand($SEED);
-    my $file        = $ARGV[0] or die "usage: $0 FILE\n";
-    my $ra_seq_ids  = get_seq_ids($file);
-    my $ra_all_ids  = get_seq_ids($FASTA);
-    my $rh_bl       = get_bl($BLAST);
+    foreach (my $i = 0; $i < @INFILES; $i++) {
+        my $file = $INFILES[$i];
+        my $outfile = $OUTFILES[$i];
+        my $ra_seq_ids  = get_seq_ids($file);
+        my $ra_all_ids  = get_seq_ids($FASTA);
+        my $rh_bl       = get_bl($BLAST);
 
-    my $num         = get_num_of_non_orphs($rh_bl,$ra_seq_ids,scalar(@{$ra_seq_ids}));
-  
-    my $total = scalar(@{$ra_seq_ids});
-    my $num_orphs = scalar(@{$ra_seq_ids}) - $num;
-    print "out of $total, $num_orphs have no hits to our 11-taxa animal database with E-Vals at or below 0.01\n";
+        my $num_orphs   = get_num_orphs($rh_bl,$ra_seq_ids,scalar(@{$ra_seq_ids}),$outfile);
+        my $total = scalar(@{$ra_seq_ids});
+        my $div = '#' x 80;
+        print "$div\nINFILE: $file\n  out of $total, $num_orphs have no hits to our 11-taxa animal database (E-Vals <= 0.01)\n";
 
-    my $less_orphs = 0;
-    for (my $i = 0; $i < $REPS; $i++) {
-        my @shuf = List::Util::shuffle(@{$ra_all_ids});
-        my $rnum = get_num_of_non_orphs($rh_bl,\@shuf,scalar(@{$ra_seq_ids}));
-        $less_orphs++ if ($rnum <= $num);
+        my $more_orphs = 0;
+        for (my $j = 0; $j < $REPS; $j++) {
+            my @shuf = List::Util::shuffle(@{$ra_all_ids});
+            my $rnum = get_num_orphs($rh_bl,\@shuf,scalar(@{$ra_seq_ids}));
+            $more_orphs++ if ($rnum >= $num_orphs);
+        }
+        my $pval = $more_orphs / $REPS;
+        print "  p-value: $pval ($more_orphs / $REPS)\n";
     }
-    my $pval = $less_orphs / $REPS;
-    print "p-value: $pval ($less_orphs / $REPS)\n";
 }
 
-sub get_num_of_non_orphs {
+sub get_num_orphs {
     my $rh_bl = shift;
     my $ra_s  = shift;
     my $num   = shift;
+    my $out   = shift;
     my $hits  = 0;
+    open OUT, ">$out" or die "cannot open $out:$!" if ($out);
     for (my $i = 0; $i < $num; $i++) {
-        $hits++ if ($rh_bl->{$ra_s->[$i]});    
-print "$ra_s->[$i]\n" unless ($rh_bl->{$ra_s->[$i]}); # if want to print ids
+        $hits++ unless ($rh_bl->{$ra_s->[$i]});
+        next unless ($out);
+        print OUT "$ra_s->[$i]\n" unless ($rh_bl->{$ra_s->[$i]});
     }
-exit; # if want to print ids
     return $hits;
 }
 
@@ -62,8 +76,9 @@ sub get_seq_ids {
 sub get_bl {
     my $file = shift;
     my %bl = ();
-    open IN, $file or die "cannot open $file:$!";
-    while (my $line = <IN>) {
+    my $fh = IO::Uncompress::Gunzip->new($file)
+            or die "IO::Uncompress::Gunzip of $file failed: $GunzipError\n";
+    while (my $line = $fh->getline()) {
         chomp $line;
         my @f = split /\t/, $line;
         $bl{$f[0]} = 1;
