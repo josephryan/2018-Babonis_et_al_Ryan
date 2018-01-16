@@ -1,0 +1,29 @@
+compcompmcmc.pl version 0.01
+TARGET FASTA: /bwdata1/jfryan/07-BEROE/09-TENTACLE_RESTART/ml_haeck_others.0.70.fa
+BACKGROUND FASTA: /bwdata1/jfryan/00-DATA/ML2.2.aa
+
+Amino acid composition:
+  low p-values are over represented; high p-values are under represented
+  T: 0.002
+  Y: 0.002
+  F: 0.003
+  W: 0.005
+  V: 0.023
+  C: 0.07
+  G: 0.095
+  I: 0.164
+  M: 0.491
+  D: 0.539
+  L: 0.55
+  S: 0.702
+  A: 0.761
+  R: 0.878
+  P: 0.973
+  E: 0.983
+  N: 0.986
+  H: 0.989
+  Q: 0.996
+  K: 1
+
+Complexity p-value: 0.98
+980 of our 1000 random sets had complexity higher than sequences in /bwdata1/jfryan/07-BEROE/09-TENTACLE_RESTART/ml_haeck_others.0.70.fa
