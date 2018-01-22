@@ -11,7 +11,7 @@ srand($SRAND);
 our $FILE = 'ML_all_datapoints.tab';
 our $LAST_EARLY_TIMEPT = 8.5;
 our $FIRST_LATE_TIMEPT = 13;
-our $REPS = 1000;
+our $REPS = 10000;
 
 our $FA_DIR = './fasta';
 
