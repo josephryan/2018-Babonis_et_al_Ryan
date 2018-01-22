@@ -1,7 +1,8 @@
 ### mcgo.pl
 script that runs the GO Monte Carlo analysis
-    `./mcgo.pl ML_GO.txt colloblast_candidates.txt MLIDS.txt > mcgo.colloblast_candidates.out`
-    `./mcgo.pl ML_GO.txt tentacle_candidates.txt MLIDS.txt > mcgo.tentacle_candidates.out`
+    
+    ./mcgo.pl ML_GO.txt colloblast_candidates.txt MLIDS.txt > mcgo.colloblast_candidates.out
+    ./mcgo.pl ML_GO.txt tentacle_candidates.txt MLIDS.txt > mcgo.tentacle_candidates.out
 
 ### MLIDS.txt
 the ids of all the Mnemiopsis leidyi gene models
