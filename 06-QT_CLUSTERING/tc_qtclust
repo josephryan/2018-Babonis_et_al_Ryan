@@ -1,0 +1,255 @@
+#!/usr/bin/perl
+
+# Joseph Ryan Dec, 2017
+# script uses a CSV of time-course expression and builds clusters
+#   if a CSV file argument is supplied it will only cluster the subset
+#   in the supplied csv file
+
+$|++;
+
+use strict;
+use warnings;
+use Statistics::Basic qw(:all);
+use Math::Round;
+use Data::Dumper;
+
+our $VERSION = 0.01;
+
+our @TIME = (0,0,0,1,1,1,2,2,2,3,3,3,4,4,4,4.5,4.5,4.5,5,5,5,5.5,5.5,5.5,6,6,6,6.5,6.5,6.5,7,7,7,7.5,7.5,7.5,8,8,8,8.5,8.5,8.5,9,9,9,10,10,10,11,11,11,12,12,12,13,13,13,13,13,13,14,14,14,14,15,15,15,15,16,16,16,16,17,17,17,17,18,18,18,18,19,19,19,19,20,20,20,20,20,20);
+
+our $FILE  = 'ML_only.csv';
+our %SKIP  = ('ambiguous' => 1, 'no_feature' => 1, 'not_aligned' => 1);
+our $LTXTM = 100; #less_than_x_total_median - genes are removed
+our $CUTOFFDIST = 6;
+
+MAIN: {
+    my $csv       = $ARGV[0]; #if no CSV clusters whole dataset
+    my $rh_csv    = get_ids($csv) if ($csv);
+    my $rh_data   = get_data($FILE,\@TIME);
+    my $rh_median = get_median($rh_data);
+    remove_skip($rh_data,\%SKIP);
+    remove_less_than_x_total_median($rh_median,$LTXTM);
+    my $rh_mv     = get_mean_and_variance($rh_median);
+    my $rh_perc   = get_perc($rh_median);
+    my $rh_dmat   = build_distance_matrix($rh_perc);
+
+    if ($csv) {
+        remove_from_dmat_if_not_in_csv($rh_dmat,$rh_csv);  
+        print_csv_for_density_plot($rh_dmat,$rh_csv,$csv,$rh_median);
+    }
+
+    my @final_clusters = ();
+    while (%{$rh_dmat}) {
+        my $ra_cl = get_clusters($rh_dmat);
+        my $max = 0;
+        my @sorted = sort {scalar(@{$b}) <=> scalar(@{$a})} @{$ra_cl};
+        my $ra_top = shift @sorted;
+        push @final_clusters, $ra_top;
+        remove_from_dmat($rh_dmat,$ra_top);
+        foreach my $ra_c (@sorted) {
+            last if (scalar(@{$ra_c}) < scalar(@{$ra_top}));
+            push @final_clusters, $ra_c;
+            remove_from_dmat($rh_dmat,$ra_c);
+        } 
+    }
+    print_clusters(\@final_clusters);
+}
+
+#print_csv_for_density_plot($rh_dmat,$rh_csv,$csv);
+sub print_csv_for_density_plot {
+    my $rh_dmat   = shift;
+    my $rh_csv    = shift;
+    my $csv       = shift;
+    my $rh_median = shift;
+
+    print "loading median...";
+    print "\n";
+
+    open OUT, ">$csv.dp.csv" or die "cannot open >$csv.dp.csv:$!";
+    
+    my %seen = ();
+    my $output = 'id,';
+    foreach my $t (@TIME) {
+        next if ($seen{$t});
+        $seen{$t}++;
+        $output .= "$t,";
+    }
+    $output =~ s/,$/\n/; 
+
+
+    foreach my $id (keys %{$rh_dmat}) {
+        $output .= "$id,";
+        foreach my $t (sort {$a <=> $b} keys %seen) {
+            $output .= "$rh_median->{$id}->{$t},";
+        }
+        $output =~ s/,$/\n/; 
+    }
+    print OUT $output;
+}
+
+sub get_ids {
+    my $file = shift;
+    my %ids = ();
+    open IN, $file or die "cannot open $file:$!"; 
+    while (my $line = <IN>) {
+        my @f = split /\,/, $line;
+        $ids{$f[0]}++;
+    }
+    return \%ids;
+}
+
+sub print_clusters {
+    my $ra_fc = shift;
+    my $num = scalar(@{$ra_fc});
+    print "#$num clusters\n";
+    my $count = 1;
+    foreach my $ra_c (@{$ra_fc}) {
+        my $str = join ',', @{$ra_c};
+        print "cluster $count: $str\n";
+        $count++;
+    }
+}
+
+sub remove_from_dmat_if_not_in_csv {
+    my $rh_d = shift;
+    my $rh_c = shift;
+    foreach my $id (keys %{$rh_d}) {
+        delete $rh_d->{$id} unless ($rh_c->{$id});
+    }
+}
+
+sub remove_from_dmat {
+    my $rh_d = shift;
+    my $ra_t = shift;
+    foreach my $id (@{$ra_t}) {
+        delete $rh_d->{$id};
+    }
+}
+
+sub get_clusters {
+    my $rh_dmat = shift;
+    my @clusters = ();
+    
+    foreach my $idx (keys %{$rh_dmat}) {
+        my $ra_cl = get_clust($rh_dmat,$idx,$CUTOFFDIST);
+        push @{$ra_cl}, $idx;
+        push @clusters, $ra_cl;
+    }
+    return \@clusters;
+}
+
+sub get_clust {
+    my $rh_d = shift;
+    my $idx  = shift;
+    my $cut  = shift;
+    my @clust = ();
+    foreach my $idy (keys %{$rh_d}) {
+        next if ($idx eq $idy);
+        push @clust, $idy if ($rh_d->{$idx}->{$idy} <= $cut);
+    }
+    return (\@clust);
+}
+
+sub remove_less_than_x_total_median {
+    my $rh_m = shift;
+    my $min  = shift;
+#my $removed = 0;
+    foreach my $id (keys %{$rh_m}) {
+        my $sum = 0;
+        foreach my $key (keys %{$rh_m->{$id}}) {
+            next if ($key eq 'top');
+            $sum += $rh_m->{$id}->{$key};
+        }
+        delete $rh_m->{$id} if ($sum < $min);
+#$removed++ if ($sum < $min);
+    }
+#print "removed $removed\n";
+}
+
+
+sub build_distance_matrix {
+    my $rh_p = shift;
+    my %dm = ();
+    foreach my $idx (keys %{$rh_p}) {
+        foreach my $idy (keys %{$rh_p}) {
+            foreach my $tpt (sort keys %{$rh_p->{$idy}}) {
+                my $diff = $rh_p->{$idx}->{$tpt} - $rh_p->{$idy}->{$tpt};
+                $diff *= -1 if ($diff < 0);
+                $dm{$idx}->{$idy} += $diff;
+                $dm{$idy}->{$idx} += $diff;
+            }
+        }
+    }
+    return \%dm;
+}
+
+sub remove_skip {
+    my $rh_p = shift;
+    my $rh_s = shift;
+    foreach my $key (keys %{$rh_s}) {
+        delete $rh_p->{$key};
+    }
+}
+
+# divide each expr value by the expr value of the highest time point
+sub get_perc {
+    my $rh_med = shift;
+    my %perc = ();
+
+    foreach my $id (keys %{$rh_med}) {
+        my $hi = $rh_med->{$id}->{'top'};
+        delete $rh_med->{$id}->{'top'};
+        foreach my $tp (sort {$a <=> $b} keys %{$rh_med->{$id}}) {
+            if ($hi == 0) {
+                $perc{$id}->{$tp} = 0;
+            } else {
+                my $frac = $rh_med->{$id}->{$tp} / $hi;
+                $perc{$id}->{$tp} = $frac;
+            }
+        }
+    }
+    return (\%perc);
+}
+
+sub get_mean_and_variance {
+    my $rh_med = shift;
+    my %mv = ();
+    foreach my $id (keys %{$rh_med}) {
+        #divide by 1 to get rid of Statistics::Basic objects
+        $mv{$id}->{'mean'} = mean(values(%{$rh_med->{$id}})) / 1;
+        $mv{$id}->{'variance'} = variance(values(%{$rh_med->{$id}})) / 1; 
+    }
+    return \%mv;
+}
+
+sub get_median {
+    my $rh_data  = shift;
+    my %median   = ();
+    foreach my $id (keys %{$rh_data}) {
+        my $hi_med = 0;
+        foreach my $tp (sort {$a <=> $b} keys %{$rh_data->{$id}}) {
+            my $median = Statistics::Basic::median($rh_data->{$id}->{$tp});
+            $median{$id}->{$tp} = $median / 1;  # divide by 1 to get rid of ref
+            $hi_med = $median if ($median > $hi_med);
+        }
+        $median{$id}->{'top'} = $hi_med / 1; # divide by 1 so no object ref
+    }
+    return \%median;
+}
+
+sub get_data {
+    my $file = shift;
+    my $ra_t = shift;
+    my %data = ();
+    open IN, $file or die "cannot open $file:$!";
+    while (my $line = <IN>) {
+        chomp $line;
+        my @f = split /,/, $line;
+        my $id = shift @f;
+        for (my $i = 0; $i < @f; $i++) {
+            push @{$data{$id}->{$ra_t->[$i]}}, $f[$i];
+        }
+    }
+    return \%data;
+}
+
