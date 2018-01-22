@@ -2,10 +2,10 @@
 
 ## GENERATE MULTIPLE MAXIMUM-LIKELIHOOD TREES
 
-#### run iqtree
+#### run iqtree (multicore version 1.5.5)
 iqtree-omp -nt 15 -m GTR+G4 -s ../00-DATA/cteno_names_w_sp.fa -pre ct_iq
 
-#### run raxml with 10 random starting trees
+#### run raxml (version 8.2.8) with 10 random starting trees
 raxmlHPC-PTHREADS-SSE3 -T 15 -p 1234 -# 10 -m GTRGAMMA --no-bfgs -s ../00-DATA/cteno_names_w_sp.fa -n ct_mp
 
 #### run raxml with 10 parsimony starting trees
