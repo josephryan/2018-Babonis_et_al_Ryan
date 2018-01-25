@@ -5,6 +5,8 @@ use warnings;
 use List::Util 'shuffle';
 use Data::Dumper;
 
+our $VERSION = 0.03;  # this version ignores transcripts with zero (does better job at this than v0.02;
+
 our $SRAND = 420;
 srand($SRAND);
 
@@ -12,52 +14,43 @@ our $FILE = 'ML_all_datapoints.tab';
 our $LAST_EARLY_TIMEPT = 8.5;
 our $FIRST_LATE_TIMEPT = 13;
 our $REPS = 10000;
+our $MINIMUM_EXPR_TO_BE_COUNTED = 1;
 
-our $FA_DIR = './fasta';
+our $FA_DIR = '.';
+our @NULL_FA = qw(ml.0.50.fa ml.0.55.fa ml.0.60.fa ml.0.65.fa ml.0.70.fa
+            ml.0.75.fa ml.0.80.fa ml.0.85.fa ml.0.90.fa ml.0.95.fa ml.1.00.fa);
 
-# the following lines were used to test the effect of our 70% cutoff of
-# presence in other ctenophores. We found little effect so chose 70%
-#our @NULL_FA = qw(ml.0.50.fa ml.0.55.fa ml.0.60.fa ml.0.65.fa ml.0.70.fa
-#            ml.0.75.fa ml.0.80.fa ml.0.85.fa ml.0.90.fa ml.0.95.fa ml.1.00.fa);
-#
-#our @H_TARG_FA = qw(ml_haeck_others.0.50.fa ml_haeck_others.0.55.fa
-#                    ml_haeck_others.0.60.fa ml_haeck_others.0.65.fa
-#                    ml_haeck_others.0.70.fa ml_haeck_others.0.75.fa
-#                    ml_haeck_others.0.80.fa ml_haeck_others.0.85.fa
-#                    ml_haeck_others.0.90.fa ml_haeck_others.0.95.fa
-#                    ml_haeck_others.1.00.fa);
-#
-#our @O_TARG_FA = qw(ml_others.0.50.fa ml_others.0.55.fa ml_others.0.60.fa
-#                    ml_others.0.65.fa ml_others.0.70.fa ml_others.0.75.fa
-#                    ml_others.0.80.fa ml_others.0.85.fa ml_others.0.90.fa
-#                    ml_others.0.95.fa ml_others.1.00.fa);
+our @H_TARG_FA = qw(ml_haeck_others.0.50.fa ml_haeck_others.0.55.fa
+                    ml_haeck_others.0.60.fa ml_haeck_others.0.65.fa
+                    ml_haeck_others.0.70.fa ml_haeck_others.0.75.fa
+                    ml_haeck_others.0.80.fa ml_haeck_others.0.85.fa
+                    ml_haeck_others.0.90.fa ml_haeck_others.0.95.fa
+                    ml_haeck_others.1.00.fa);
 
-# comment below 3 lines if you uncomment above
-our @NULL_FA = qw(ml.0.70.fa);
-our @H_TARG_FA = qw(ml_haeck_others.0.70.fa);
-our @O_TARG_FA = qw(ml_others.0.70.fa);
+our @O_TARG_FA = qw(ml_others.0.50.fa ml_others.0.55.fa ml_others.0.60.fa
+                    ml_others.0.65.fa ml_others.0.70.fa ml_others.0.75.fa
+                    ml_others.0.80.fa ml_others.0.85.fa ml_others.0.90.fa
+                    ml_others.0.95.fa ml_others.1.00.fa);
+
+# to just run .70 uncomment the following 3 lines
+@NULL_FA = qw(ml.0.70.fa);
+@H_TARG_FA = qw(ml_haeck_others.0.70.fa);
+@O_TARG_FA = qw(ml_others.0.70.fa);
 
 MAIN: {
     print_header();
     for (my $i = 0; $i < @NULL_FA; $i++) {
-        my $rh_null = get_ids_from_fasta("$FA_DIR/$NULL_FA[$i]");
-        my $rh_h    = get_ids_from_fasta("$FA_DIR/$H_TARG_FA[$i]");
-        my $rh_o    = get_ids_from_fasta("$FA_DIR/$O_TARG_FA[$i]");
+        my $rh_expr = get_data($FILE);  # get all expr ratios
+        my $rh_null = get_ids_from_fasta("$FA_DIR/$NULL_FA[$i]",$rh_expr);
+        my $rh_h    = get_ids_from_fasta("$FA_DIR/$H_TARG_FA[$i]",$rh_expr);
+        my $rh_o    = get_ids_from_fasta("$FA_DIR/$O_TARG_FA[$i]",$rh_expr);
+        my $rh_dat  = get_data($FILE,$rh_null); # get only exprratios in our set
 
-# (ratio > 1 means higher expression after tentacle development)
-# uncomment next 9 lines to print expr ratios 
-#my $rh_b = get_data($FILE,$rh_h);
-#foreach my $key (sort {$rh_b->{$b} <=> $rh_b->{$a}} keys %{$rh_b}) {
-#    print "$key,$rh_b->{$key}\n";
-#}
-#my $rh_c = get_data($FILE,$rh_o);
-#foreach my $key (sort {$rh_b->{$b} <=> $rh_b->{$a}} keys %{$rh_b}) {
-#    print "$key,$rh_b->{$key}\n";
-#}
-#exit;
-        my $rh_dat  = get_data($FILE,$rh_null);
+        # uncomment the following for a quick look at expr ratios
+        # print_expr_ratios($FILE,$rh_h); exit;
+        # print_expr_ratios($FILE,$rh_o); exit;
 
-        my $h_out = process_data($H_TARG_FA[$i],$rh_null,$rh_h,$rh_dat);
+        my $h_out = process_data($H_TARG_FA[$i],$rh_h,$rh_dat);
         my $h_rand = 0;
         for (my $i = 0; $i < $REPS; $i++) {
             my $h_ml = mcmc(scalar(keys(%{$rh_h})),$rh_dat);
@@ -66,7 +59,7 @@ MAIN: {
         my $h_pval = $h_rand / $REPS;
         print "$h_pval\n";
 
-        my $o_out = process_data($O_TARG_FA[$i],$rh_null,$rh_o,$rh_dat);
+        my $o_out = process_data($O_TARG_FA[$i],$rh_o,$rh_dat);
         my $o_rand = 0;
         for (my $i = 0; $i < $REPS; $i++) {
             my $o_ml = mcmc(scalar(keys(%{$rh_o})),$rh_dat);
@@ -90,7 +83,7 @@ sub mcmc {
 }    
 
 sub print_header {
-    print "#file,null_total,null_more_later,targ_total,targ_more_later,pval\n";
+    print "file,null_total,null_more_later,targ_total,targ_more_later,pval\n";
 }
 
 sub get_more_later {
@@ -105,9 +98,13 @@ sub get_more_later {
     return $targ;
 }
 
+# input: $file = FASTA file - this is for reporting only
+# input: $rh_targ = TARGET set of expr values (ids same as $file)
+# input: $rh_dat  = 
+# output = %data
+# %data = ('ML0001a' => ['avg_time0', 'avg_time1'];
 sub process_data {
     my $file    = shift;
-    my $rh_null = shift;
     my $rh_targ = shift;
     my $rh_dat  = shift;
 
@@ -136,11 +133,13 @@ sub get_percent {
 
 sub get_ids_from_fasta {
     my $file = shift;
+    my $rh_dat = shift;
     my %ids = ();
     open IN, $file or die "cannot open $file:$!";
     while (my $line = <IN>) {
         next unless ($line =~ m/^>(\S+)/);
-        $ids{$1}++;
+        my $id = $1;
+        $ids{$id}++ if ($rh_dat->{$id}); # no expr info if not in rh_dat
     }
     return \%ids;
 }
@@ -148,8 +147,10 @@ sub get_ids_from_fasta {
 
 # input = timecoursefile
 # input = null ids  #ids from which to build distribution
-# output = %data
-# %data = ('ML0001a' => ['avg_time0', 'avg_time1'];
+# return value is a ratio of expression:
+#     reads after time point / # samples after the time point
+#     over reads before time point / # samples before the time point
+#     (values > 1 are higher after time point; values < 1 are higher before)
 sub get_data {
     my $file = shift;
     my $rh_ids = shift;
@@ -176,7 +177,8 @@ sub get_data {
         my @f = split /\t/, $line;
         my $id = shift @f;
         $id =~ s/'//g;
-        next unless ($rh_ids->{$id});
+        next if expr_less_than_min(\@f,$MINIMUM_EXPR_TO_BE_COUNTED);
+        next if ($rh_ids && !$rh_ids->{$id});
         my $pre = 0;
         my $pre_ct = 0;
         for (my $i = 0; $i < $let; $i++) {
@@ -189,8 +191,30 @@ sub get_data {
             $post += $f[$i];
             $post_ct++;
         }
+        next unless ($post);
         $data{$id} = ($post / $post_ct) / ($pre / $pre_ct + 1);
     }
     return \%data;
+}
+
+sub expr_less_than_min {
+    my $ra_expr = shift;
+    my $min = shift;
+    my $expr = 0;
+    foreach my $val (@{$ra_expr}) {
+        $expr += $val;
+    }
+    return 1 if ($expr < $min);
+    return 0;
+}
+
+# this routine is just for debugging
+sub print_expr_ratios {
+    my $file = shift;
+    my $rh_d = shift;
+    my $rh_b = get_data($FILE,$rh_d);
+    foreach my $key (sort {$rh_b->{$b} <=> $rh_b->{$a}} keys %{$rh_b}) {
+        print "$key,$rh_b->{$key}\n";
+    }
 }
 
