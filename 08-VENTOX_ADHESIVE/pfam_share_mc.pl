@@ -49,6 +49,23 @@ MAIN: {
         my $pval = $gte{$key} / $REPS;
         print "$key: p-value = $pval\n";
     }
+    print_pfam_ids($rh_ventox_pf,$rh_adhesive_pf,$rh_collo_pf,$rh_tent_pf);
+}
+
+sub print_pfam_ids {
+    my $rh_ventox = shift;
+    my $rh_adhesive = shift;
+    my $rh_collo = shift;
+    my $rh_tent = shift;
+
+    print "PFAM ids present in Ventox database:\n";
+    foreach my $pf (sort keys %{$rh_ventox}) { print "  $pf\n"; }
+    print "\nPFAM ids present in adhesive dataset:\n";
+    foreach my $pf (sort keys %{$rh_adhesive}) { print "  $pf\n"; }
+    print "\nPFAM ids present in colloblast candidates:\n";
+    foreach my $pf (sort keys %{$rh_collo}) { print "  $pf\n"; }
+    print "\nPFAM ids present in tentacle candidates:\n";
+    foreach my $pf (sort keys %{$rh_tent}) { print "  $pf\n"; }
 }
 
 sub get_ml_pfs {
