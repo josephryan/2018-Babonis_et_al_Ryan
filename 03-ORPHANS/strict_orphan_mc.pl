@@ -12,14 +12,14 @@ our $REPS  = 10000;
 our $BLAST = 'ML2.2_v_meta_minusML.blastp.gz';
 
 our $FASTA = 'ML2.2.aa'; 
-# ML2.2.aa can be downloade from:
+# ML2.2.aa can be downloaded from:
 #   https://research.nhgri.nih.gov/mnemiopsis/download/proteome/ML2.2.aa.gz
 
 #our @INFILES = qw(../01-LOST/ml_haeck_others.0.70.fa ../01-LOST/ml_others.0.70.fa ../02-CMEFBL/MLHO_87.fa ../02-CMEFBL/MLO_120.fa);
 #our @OUTFILES = qw( MLHO_165_orphs.txt MLO_189_orphs.txt MLHO_120_orphs.txt MLO_87_orphs.txt );
 
-our @INFILES = qw(../01-LOST/ml_haeck_others.0.70.fa ../01-LOST/ml_others.0.70.fa);
-our @OUTFILES = qw( MLHO_165_orphs.txt MLO_189_orphs.txt);
+our @INFILES = qw(../01-LOST/ml_tentacle_candidates.fa ../01-LOST/ml_colloblast_candidates.fa);
+our @OUTFILES = qw( ml_tentacle_orphs.txt ml_colloblast_orphs.txt);
 
 MAIN: {
     srand($SEED);
