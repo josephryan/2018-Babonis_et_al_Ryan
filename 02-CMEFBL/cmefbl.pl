@@ -16,41 +16,55 @@ our $FIRST_LATE_TIMEPT = 13;
 our $REPS = 10000;
 our $MINIMUM_EXPR_TO_BE_COUNTED = 1;
 
-our $FA_DIR = '.';
-our @NULL_FA = qw(ml.0.50.fa ml.0.55.fa ml.0.60.fa ml.0.65.fa ml.0.70.fa
-            ml.0.75.fa ml.0.80.fa ml.0.85.fa ml.0.90.fa ml.0.95.fa ml.1.00.fa);
+our $FA_DIR = './fasta';
+our @NULL_FA = qw(ml.0.70.fa);
+our @T_TARG_FA = qw(ml_tentacle_candidates.0.70.fa);
+our @C_TARG_FA = qw(ml_colloblast_candidates.0.70.fa);
 
-our @H_TARG_FA = qw(ml_haeck_others.0.50.fa ml_haeck_others.0.55.fa
-                    ml_haeck_others.0.60.fa ml_haeck_others.0.65.fa
-                    ml_haeck_others.0.70.fa ml_haeck_others.0.75.fa
-                    ml_haeck_others.0.80.fa ml_haeck_others.0.85.fa
-                    ml_haeck_others.0.90.fa ml_haeck_others.0.95.fa
-                    ml_haeck_others.1.00.fa);
-
-our @O_TARG_FA = qw(ml_others.0.50.fa ml_others.0.55.fa ml_others.0.60.fa
-                    ml_others.0.65.fa ml_others.0.70.fa ml_others.0.75.fa
-                    ml_others.0.80.fa ml_others.0.85.fa ml_others.0.90.fa
-                    ml_others.0.95.fa ml_others.1.00.fa);
-
-# to just run .70 uncomment the following 3 lines
-@NULL_FA = qw(ml.0.70.fa);
-@H_TARG_FA = qw(ml_haeck_others.0.70.fa);
-@O_TARG_FA = qw(ml_others.0.70.fa);
+# uncomment the following redefinings of @NULL_FA, @T_TARG_FA, and @C_TARG_FA
+# to run on different percentage cutoffs from outputs of 
+# ../01-LOST/get_tentacle_colloblast_candidates.pl
+# @NULL_FA = qw(ml.0.50.fa ml.0.55.fa ml.0.60.fa ml.0.65.fa ml.0.70.fa
+#            ml.0.75.fa ml.0.80.fa ml.0.85.fa ml.0.90.fa ml.0.95.fa ml.1.00.fa);
+#
+# @T_TARG_FA = qw(ml_tentacle_candidates.0.50.fa
+#                 ml_tentacle_candidates.0.55.fa
+#                 ml_tentacle_candidates.0.60.fa
+#                 ml_tentacle_candidates.0.65.fa
+#                 ml_tentacle_candidates.0.70.fa
+#                 ml_tentacle_candidates.0.75.fa
+#                 ml_tentacle_candidates.0.80.fa
+#                 ml_tentacle_candidates.0.85.fa
+#                 ml_tentacle_candidates.0.90.fa
+#                 ml_tentacle_candidates.0.95.fa
+#                 ml_tentacle_candidates.1.00.fa);
+#
+# @C_TARG_FA = qw(ml_colloblast_candidates.0.50.fa
+#                 ml_colloblast_candidates.0.55.fa
+#                 ml_colloblast_candidates.0.60.fa
+#                 ml_colloblast_candidates.0.65.fa
+#                 ml_colloblast_candidates.0.70.fa
+#                 ml_colloblast_candidates.0.75.fa
+#                 ml_colloblast_candidates.0.80.fa
+#                 ml_colloblast_candidates.0.85.fa
+#                 ml_colloblast_candidates.0.90.fa
+#                 ml_colloblast_candidates.0.95.fa
+#                 ml_colloblast_candidates.1.00.fa);
 
 MAIN: {
     print_header();
     for (my $i = 0; $i < @NULL_FA; $i++) {
         my $rh_expr = get_data($FILE);  # get all expr ratios
         my $rh_null = get_ids_from_fasta("$FA_DIR/$NULL_FA[$i]",$rh_expr);
-        my $rh_h    = get_ids_from_fasta("$FA_DIR/$H_TARG_FA[$i]",$rh_expr);
-        my $rh_o    = get_ids_from_fasta("$FA_DIR/$O_TARG_FA[$i]",$rh_expr);
+        my $rh_h    = get_ids_from_fasta("$FA_DIR/$T_TARG_FA[$i]",$rh_expr);
+        my $rh_o    = get_ids_from_fasta("$FA_DIR/$C_TARG_FA[$i]",$rh_expr);
         my $rh_dat  = get_data($FILE,$rh_null); # get only exprratios in our set
 
         # uncomment the following for a quick look at expr ratios
         # print_expr_ratios($FILE,$rh_h); exit;
         # print_expr_ratios($FILE,$rh_o); exit;
 
-        my $h_out = process_data($H_TARG_FA[$i],$rh_h,$rh_dat);
+        my $h_out = process_data($T_TARG_FA[$i],$rh_h,$rh_dat);
         my $h_rand = 0;
         for (my $i = 0; $i < $REPS; $i++) {
             my $h_ml = mcmc(scalar(keys(%{$rh_h})),$rh_dat);
@@ -59,7 +73,7 @@ MAIN: {
         my $h_pval = $h_rand / $REPS;
         print "$h_pval\n";
 
-        my $o_out = process_data($O_TARG_FA[$i],$rh_o,$rh_dat);
+        my $o_out = process_data($C_TARG_FA[$i],$rh_o,$rh_dat);
         my $o_rand = 0;
         for (my $i = 0; $i < $REPS; $i++) {
             my $o_ml = mcmc(scalar(keys(%{$rh_o})),$rh_dat);
