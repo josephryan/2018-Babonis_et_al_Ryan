@@ -1,6 +1,6 @@
 ### How to build the meta_minusML.fa BLAST database and run the BLAST
 
-    ```lwp-download 'http://ryanlab.whitney.ufl.edu/downloads/alien_index/meta.fa.gz'
+    ```download 'http://ryanlab.whitney.ufl.edu/downloads/alien_index/meta.fa.gz'
 
     gzip -d meta.fa.gz 
 
@@ -14,7 +14,7 @@
 
     makeblastdb -dbtype prot -in meta_minusML.fa
 
-    lwp-download https://research.nhgri.nih.gov/mnemiopsis/download/proteome/ML2.2.aa.gz
+    download https://research.nhgri.nih.gov/mnemiopsis/download/proteome/ML2.2.aa.gz
 
     gzip -d ML2.2.aa
 
@@ -30,50 +30,23 @@
    our set of interest and determines how many of these randoms sets 
    have the same number of orphans. From that generates a P-Value
 
-#### identify orphans in the whole set of 189 absent from Beroe and Haeckalia
+#### identify orphans in colloblast candidates
 
-    perl strict_orphan_mc.pl ../ml_others.0.70.fa
+    perl strict_orphan_mc.pl ../01-LOST/ml_colloblast_candidates.fa
 
 out of 189, 79 have no hits to our 11-taxa animal database with E-Vals at or below 0.01
 
     p-value: 0 (0 / 10000)
 
-#### identify orphans in the whole set of 165 absent from Beroe
+#### identify orphans in tentacle candidates
 
-    perl strict_orphan_mc.pl ../ml_haeck_others.0.70.fa
+    perl strict_orphan_mc.pl ../01-LOST/ml_tentacle_candidates.fa
 
 out of 165, 46 have no hits to our 11-taxa animal database with E-Vals at or below 0.01
 
     p-value: 0.6431 (6431 / 10000)
 
 #################################################
-# this is on those expressed higher after onset of tentacle dev
-
-#### identify orphans in those absent from Beroe and Haeckalia and expressed higher after onset of tentacle development
-
-    perl strict_orphan_mc.pl ../11-CMEFBL_RESULTS/MLH_87.fa
-
-out of 87, 21 have no hits with E-Vals at or below 0.01
-
-    p-value: 0.8599 (8599 / 10000)
-
-#### identify orphans in those absent from Beroe and expressed higher after onset of tentacle development
-
-    perl strict_orphan_mc.pl ../11-CMEFBL_RESULTS/MLO_120.fa
-
-out of 120, 52 have no hits to our 11-taxa animal database with E-Vals at or below 0.01
-
-    p-value: 0.0007 (7 / 10000)
-
-#################################################
 # there are 2 lines in the strict_orphan_mc.pl script that can be uncommented
-# to generate ids of orphans. Those files have been generated:
-
-    189_orphs.txt (110 orphs)
-
-    165_orphs.txt  (119 orphs)
-
-    120_orphs.txt (68 orphs)
-
-    87_orphs.txt (66 orphs)
+# to generate ids of orphans.
 
