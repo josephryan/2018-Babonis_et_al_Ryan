@@ -1,20 +1,20 @@
+### get_tentacle_colloblast_candidates.pl
+Script identifies orthogroups that contain no Beroe gene, but genes from 70%
+of other species (including Mnemiopsis leidyi). If a group has a Haeckalia gene
+the Mnemiopsis leidyi gene ids in the group are printed to ml_tentacle_candidates_ids.txt. Otherwise, they are printed to ml_colloblast_candidates_ids.txt.
+
+### ml_tentacle_candidates_ids.txt
+output of get_tentacle_colloblast_candidates.pl. 
+
+### ml_tentacle_candidates.fa
+These are the ML tentacle candidate sequences in FASTA format (ids from ml_tentacle_candidates_ids.txt)
+
+### ml_colloblast_candidates_ids.txt
+output of get_tentacle_colloblast_candidates.pl.
+
+### ml_colloblast_candidates.fa
+These are the ML colloblast candidate sequences in FASTA format (ids from ml_colloblast_candidates_ids.txt)
+
 ### ogs.txt.gz
 compressed orthogroups file from orthofinder run
-
-### get_absent_from_beroe_ids.pl
-Program looks for orthogroups where no Beroe gene is present but genes
-from 70% of other species are present. It prints Mnemiopsis leidyi IDs from 
-orthogroups to the file present_in_ml_70perc.out. 
-
-The script also identifies orthogroups where no Beroe gene and no Haeckalia
-genes are present, but genes from 70% of other species are present. It
-prints Mnemiopsis leidyi IDS from these orthogroups to the file present_in_ml_haeck_70perc.out
-
-### ml_others.0.70.fa
-These are the ML sequences in FASTA format corresponding with the ids in
-the present_in_ml_70perc.out
-
-### ml_haeck_others.0.70.fa
-These are the ML sequences in FASTA format corresponding with the ids in 
-the present_in_ml_haeck_70perc.out file
 
