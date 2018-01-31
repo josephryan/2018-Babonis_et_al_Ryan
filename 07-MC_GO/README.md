@@ -8,7 +8,7 @@ script that runs the GO Monte Carlo analysis
 the ids of all the Mnemiopsis leidyi gene models
 
 ### ML_GO.txt
-GO analysis of all M. leidyi gene models performed in Levin et al. 2016
+GO analysis of all M. leidyi gene models performed in Levin et al. 2016 (Trinotate)
 
 ### colloblast_candidates.txt
 list of candidate collablast genes
