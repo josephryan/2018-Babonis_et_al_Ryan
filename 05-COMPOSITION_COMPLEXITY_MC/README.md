@@ -4,21 +4,21 @@
     https://research.nhgri.nih.gov/mnemiopsis/download/proteome/ML2.2.aa.gz
 
 #### run on tentacle candidate genes
-perl compcompmcmc.pl ../01-LOST/ml_others.0.70.fa ML2.2.aa > compcompmcmc.others.out
+perl compcomp_mc.pl ../01-LOST/ml_tentacle_candidates.fa ML2.2.aa > compcomp_mc.tentacles.out
 
 #### run on colloblast candidate genes
-perl compcompmcmc.pl ../01-LOST/ml_haeck_others.0.70.fa ML2.2.aa > compcompmcmc.haeck_others.out
+perl compcomp_mc.pl ../01-LOST/ml_colloblast_candidates.fa ML2.2.aa > compcomp_mc.colloblasts.out
 
 
 ## Files
 
-#### compcompmcmc.pl
+#### compcomp_mc.pl
 the script
 
-#### compcompmcmc.others.out
+#### compcomp_mc.tentacles.out
 output for tentacle candidate genes
 
-#### compcompmcmc.haeck_others.out
+#### compcomp_mc.colloblasts.out
 output for colloblast candidate genes 
 
 
