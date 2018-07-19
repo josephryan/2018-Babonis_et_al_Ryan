@@ -1,7 +1,7 @@
 # colloblast and tentacle candidates in single-cell data
 
 ### sebe-pedros_etal_mc.pl
-Script counts how many candidates are in the Sebé-Pedrós et al. data (the sample count = X), then determines the greatest number of genes from these data that occur in a single cluster (this is the test statistic). It then randomly draws X identifiers from the Sebé-Pedrós data and compares the greatest number of genes from this sampled data set occur in a single cluster. It does this 10,000 times and determines a p value by dividing the number of the sampled data that are greater than or equal to the test statistic by 10,000. 
+Script counts how many candidates (input id file) are in the Sebé-Pedrós et al. data (the sample count = X), then determines the greatest number of genes from these data that occur in a single cluster (this is the test statistic). It then randomly draws X identifiers from the Sebé-Pedrós data and compares the greatest number of genes from this sampled data set occur in a single cluster. It does this 10,000 times and determines a p value by dividing the number of the sampled data that are greater than or equal to the test statistic by 10,000. 
 
 ### 165.id
 identifiers from tentacle candidates
