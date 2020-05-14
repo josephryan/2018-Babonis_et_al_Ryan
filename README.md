@@ -1,5 +1,9 @@
 # 2018-Babonis_et_al_Ryan
 
+This repo provides scripts, commands, and data used in:
+
+Babonis LS, DeBiasse MB, Francis WR, Christianson LM, Moss AG, Haddock SH, Martindale MQ, Ryan JF. Integrating embryonic development and evolutionary history to characterize tentacle-specific cell types in a Ctenophore. Molecular biology and evolution. 2018 Dec 1;35(12):2940-56.
+
 ### 01-LOST
 Analysis to identify genes lost in Beroe and/or Haeckalia
 
